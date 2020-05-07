@@ -15,6 +15,14 @@
  * @license MIT - http://datatables.net/license_mit
  */
 
+
+// Please Remove below 4 lines as this is use in Datatatables test environment for your local or live environment please remove it or else it will not work
+$file = $_SERVER['DOCUMENT_ROOT'].'/datatables/pdo.php';
+if ( is_file( $file ) ) {
+	include( $file );
+}
+
+
 class SSP {
 	/**
 	 * Create the data output array for the DataTables rows
@@ -35,10 +43,20 @@ class SSP {
 
 				// Is there a formatter?
 				if ( isset( $column['formatter'] ) ) {
-					$row[ $column['dt'] ] = $column['formatter']( $data[$i][ $column['db'] ], $data[$i] );
+                    if(empty($column['db'])){
+                        $row[ $column['dt'] ] = $column['formatter']( $data[$i] );
+                    }
+                    else{
+                        $row[ $column['dt'] ] = $column['formatter']( $data[$i][ $column['db'] ], $data[$i] );
+                    }
 				}
 				else {
-					$row[ $column['dt'] ] = $data[$i][ $columns[$j]['db'] ];
+                    if(!empty($column['db'])){
+                        $row[ $column['dt'] ] = $data[$i][ $columns[$j]['db'] ];
+                    }
+                    else{
+                        $row[ $column['dt'] ] = "";
+                    }
 				}
 			}
 
@@ -166,8 +184,10 @@ class SSP {
 				$column = $columns[ $columnIdx ];
 
 				if ( $requestColumn['searchable'] == 'true' ) {
-					$binding = self::bind( $bindings, '%'.$str.'%', PDO::PARAM_STR );
-					$globalSearch[] = "`".$column['db']."` LIKE ".$binding;
+					if(!empty($column['db'])){
+						$binding = self::bind( $bindings, '%'.$str.'%', PDO::PARAM_STR );
+						$globalSearch[] = "`".$column['db']."` LIKE ".$binding;
+					}
 				}
 			}
 		}
@@ -183,8 +203,10 @@ class SSP {
 
 				if ( $requestColumn['searchable'] == 'true' &&
 				 $str != '' ) {
-					$binding = self::bind( $bindings, '%'.$str.'%', PDO::PARAM_STR );
-					$columnSearch[] = "`".$column['db']."` LIKE ".$binding;
+					if(!empty($column['db'])){
+						$binding = self::bind( $bindings, '%'.$str.'%', PDO::PARAM_STR );
+						$columnSearch[] = "`".$column['db']."` LIKE ".$binding;
+					}
 				}
 			}
 		}
@@ -495,7 +517,12 @@ class SSP {
 		$out = array();
 
 		for ( $i=0, $len=count($a) ; $i<$len ; $i++ ) {
-			$out[] = $a[$i][$prop];
+            if(empty($a[$i][$prop])){
+                continue;
+			}
+			//removing the $out array index confuses the filter method in doing proper binding,
+			//adding it ensures that the array data are mapped correctly
+			$out[$i] = $a[$i][$prop];
 		}
 
 		return $out;
